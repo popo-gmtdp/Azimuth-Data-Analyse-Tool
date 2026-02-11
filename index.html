@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>數據強度分析工具</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .drop-zone {
+            border: 2px dashed #cbd5e1;
+            transition: all 0.3s ease;
+        }
+        .drop-zone.drag-over {
+            border-color: #3b82f6;
+            background-color: #eff6ff;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 min-h-screen font-sans text-slate-900">
+
+    <div class="max-w-5xl mx-auto px-4 py-12">
+        <!-- 標題區 -->
+        <header class="text-center mb-12">
+            <h1 class="text-4xl font-extrabold text-slate-800 mb-4">方位角數據分析儀</h1>
+            <p class="text-slate-600">上傳您的 JSON 檔案以獲取強度分析報告與互動圖表</p>
+        </header>
+
+        <!-- 上傳區 -->
+        <div id="dropZone" class="drop-zone bg-white rounded-2xl p-12 text-center cursor-pointer mb-8 shadow-sm">
+            <input type="file" id="fileInput" class="hidden" accept=".json">
+            <div class="flex flex-col items-center">
+                <svg class="w-16 h-16 text-blue-500 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                </svg>
+                <p class="text-xl font-medium text-slate-700">點擊或拖放 JSON 檔案至此</p>
+                <p class="text-sm text-slate-400 mt-2">支援格式：.json (數據結構為 [[方位角, 強度], ...])</p>
+            </div>
+        </div>
+
+        <!-- 結果區 (初始隱藏) -->
+        <div id="resultSection" class="hidden space-y-8">
+            
+            <!-- 圖表區 -->
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+                <h2 class="text-xl font-bold mb-4 flex items-center">
+                    <span class="w-2 h-6 bg-blue-500 rounded-full mr-2"></span>
+                    數據分佈圖
+                </h2>
+                <div class="h-80 w-full">
+                    <canvas id="intensityChart"></canvas>
+                </div>
+            </div>
+
+            <!-- 表格與洞察 -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <!-- 排行榜 -->
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+                    <h2 class="text-xl font-bold mb-4 text-blue-600">強度前 10 名排行</h2>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left">
+                            <thead>
+                                <tr class="border-b border-slate-100">
+                                    <th class="py-3 font-semibold text-slate-600">排名</th>
+                                    <th class="py-3 font-semibold text-slate-600">方位角 (°)</th>
+                                    <th class="py-3 font-semibold text-slate-600">強度</th>
+                                </tr>
+                            </thead>
+                            <tbody id="topTenTableBody">
+                                <!-- 動態生成 -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- 數據統計 -->
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+                    <h2 class="text-xl font-bold mb-4 text-emerald-600">快速統計</h2>
+                    <div id="statsContent" class="space-y-4">
+                        <div class="p-4 bg-slate-50 rounded-lg">
+                            <p class="text-sm text-slate-500">最大強度方位角</p>
+                            <p id="maxAzimuth" class="text-2xl font-bold text-slate-800">-</p>
+                        </div>
+                        <div class="p-4 bg-slate-50 rounded-lg">
+                            <p class="text-sm text-slate-500">平均強度</p>
+                            <p id="avgIntensity" class="text-2xl font-bold text-slate-800">-</p>
+                        </div>
+                        <div class="p-4 bg-slate-50 rounded-lg">
+                            <p class="text-sm text-slate-500">數據點總數</p>
+                            <p id="totalPoints" class="text-2xl font-bold text-slate-800">-</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('fileInput');
+        const resultSection = document.getElementById('resultSection');
+        let myChart = null;
+
+        // 點擊上傳
+        dropZone.addEventListener('click', () => fileInput.click());
+
+        // 拖放效果
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('drag-over');
+        });
+
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('drag-over');
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('drag-over');
+            const file = e.dataTransfer.files[0];
+            if (file) handleFile(file);
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) handleFile(file);
+        });
+
+        function handleFile(file) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    processData(data);
+                } catch (err) {
+                    alert('檔案讀取失敗，請確認是否為標準的 JSON 格式。');
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        function processData(data) {
+            // data 格式預期為 [[azimuth, intensity], ...]
+            const formattedData = data.map(item => ({
+                x: item[0],
+                y: item[1]
+            }));
+
+            // 1. 排序找出前 10
+            const sorted = [...formattedData].sort((a, b) => b.y - a.y);
+            const topTen = sorted.slice(0, 10);
+
+            // 2. 更新表格
+            const tableBody = document.getElementById('topTenTableBody');
+            tableBody.innerHTML = '';
+            topTen.forEach((item, index) => {
+                const row = `
+                    <tr class="border-b border-slate-50 hover:bg-slate-50 transition-colors">
+                        <td class="py-3 font-medium text-slate-500">#${index + 1}</td>
+                        <td class="py-3 font-bold text-slate-800">${item.x}</td>
+                        <td class="py-3 text-blue-600 font-mono">${item.y.toLocaleString()}</td>
+                    </tr>
+                `;
+                tableBody.innerHTML += row;
+            });
+
+            // 3. 更新統計
+            const total = formattedData.reduce((acc, curr) => acc + curr.y, 0);
+            document.getElementById('maxAzimuth').innerText = `${topTen[0].x} °`;
+            document.getElementById('avgIntensity').innerText = (total / formattedData.length).toFixed(2);
+            document.getElementById('totalPoints').innerText = formattedData.length;
+
+            // 4. 繪製圖表
+            renderChart(formattedData);
+
+            // 顯示結果
+            resultSection.classList.remove('hidden');
+            resultSection.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function renderChart(data) {
+            const ctx = document.getElementById('intensityChart').getContext('2d');
+            
+            if (myChart) {
+                myChart.destroy();
+            }
+
+            myChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    datasets: [{
+                        label: '強度值',
+                        data: data,
+                        borderColor: '#3b82f6',
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.3,
+                        pointRadius: 2,
+                        pointHoverRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            type: 'linear',
+                            title: { display: true, text: '方位角 (Azimuth)' }
+                        },
+                        y: {
+                            beginAtZero: true,
+                            title: { display: true, text: '強度 (Intensity)' }
+                        }
+                    },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: (context) => `方位角: ${context.parsed.x}°, 強度: ${context.parsed.y}`
+                            }
+                        }
+                    }
+                }
+            });
+        }
+    </script>
+</body>
+</html>
