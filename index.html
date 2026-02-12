@@ -7,172 +7,155 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=-apple-system,BlinkMacSystemFont,Segoe+UI,Helvetica,Arial,sans-serif&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        gh: {
+                            canvas: '#f6f8fa',
+                            border: '#d0d7de',
+                            muted: '#636c76',
+                            default: '#1f2328',
+                            darkCanvas: '#0d1117',
+                            darkBorder: '#30363d',
+                            darkMuted: '#8b949e',
+                            darkDefault: '#c9d1d9'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
     <style>
-        :root {
-            --gh-canvas: #f6f8fa;
-            --gh-border: #d0d7de;
-            --gh-fg-muted: #636c76;
-            --gh-fg-default: #1f2328;
-            --gh-accent: #0969da;
-            --gh-success: #1a7f37;
-        }
-
         body {
-            background-color: #ffffff;
-            color: var(--gh-fg-default);
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
             -webkit-font-smoothing: antialiased;
+            transition: background-color 0.2s, color 0.2s;
         }
-
-        .mono { font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, SF Mono, Menlo, Consolas, Liberation Mono, monospace; }
+        .mono { font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace; }
 
         .gh-container {
-            border: 1px solid var(--gh-border);
+            border: 1px solid var(--border-color);
             border-radius: 6px;
             overflow: hidden;
+            background-color: var(--container-bg);
         }
 
-        .gh-header {
-            background-color: var(--gh-canvas);
-            border-bottom: 1px solid var(--gh-border);
-            padding: 8px 16px;
+        :root {
+            --border-color: #d0d7de;
+            --container-bg: #ffffff;
+            --header-bg: #f6f8fa;
         }
 
-        .gh-btn {
-            background-color: #f6f8fa;
-            border: 1px solid var(--gh-border);
-            border-radius: 6px;
-            padding: 5px 12px;
-            font-size: 12px;
-            font-weight: 600;
-            color: var(--gh-fg-default);
-            box-shadow: 0 1px 0 rgba(27, 31, 36, 0.04);
-            transition: 0.2s;
-        }
-        .gh-btn:hover {
-            background-color: #f3f4f6;
-            border-color: #afb8c1;
-        }
-        .gh-btn-primary {
-            background-color: #1f883d;
-            color: #ffffff;
-            border-color: rgba(31, 35, 40, 0.15);
-        }
-        .gh-btn-primary:hover {
-            background-color: #1a7f37;
-        }
-
-        .drop-zone {
-            border: 2px dashed var(--gh-border);
-            border-radius: 6px;
-            background: var(--gh-canvas);
-        }
-
-        .badge {
-            display: inline-flex;
-            align-items: center;
-            padding: 0 7px;
-            font-size: 12px;
-            font-weight: 500;
-            line-height: 18px;
-            white-space: nowrap;
-            border: 1px solid var(--gh-border);
-            border-radius: 2em;
-            color: var(--gh-fg-muted);
+        .dark {
+            --border-color: #30363d;
+            --container-bg: #161b22;
+            --header-bg: #0d1117;
         }
 
         .custom-scrollbar::-webkit-scrollbar { width: 6px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #d0d7de; border-radius: 10px; }
+        .dark .custom-scrollbar::-webkit-scrollbar-thumb { background: #484f58; }
+
+        /* 前 10 名標註 */
+        .rank-top-10 { background-color: #f0f7ff; }
+        .dark .rank-top-10 { background-color: rgba(56, 139, 253, 0.1); }
+        
+        .rank-1 { color: #cf222e; font-weight: 800; }
+        .rank-2 { color: #9a6700; font-weight: 700; }
+        .rank-3 { color: #0969da; font-weight: 700; }
     </style>
 </head>
-<body class="min-h-screen flex flex-col">
+<body class="min-h-screen flex flex-col dark:bg-gh-darkCanvas bg-white text-gh-default dark:text-gh-darkDefault">
 
-    <!-- GitHub Top Navigation Mimic -->
-    <nav class="bg-[#24292f] text-white py-3 px-4 md:px-8 flex items-center gap-4">
-        <svg height="32" viewBox="0 0 16 16" width="32" class="fill-white"><path d="M8 0c4.42 0 8 3.58 8 8a8.013 8.013 0 0 1-5.45 7.59c-.4.08-.55-.17-.55-.38 0-.27.01-1.13.01-2.2 0-.75-.25-1.23-.54-1.48 1.78-.2 3.65-.88 3.65-3.95 0-.88-.31-1.59-.82-2.15.08-.2.36-1.02-.08-2.12 0 0-.67-.22-2.2.82-.64-.18-1.32-.27-2-.27-.68 0-1.36.09-2 .27-1.53-1.03-2.2-.82-2.2-.82-.44 1.1-.16 1.92-.08 2.12-.51.56-.82 1.28-.82 2.15 0 3.06 1.86 3.75 3.64 3.95-.23.2-.44.55-.51 1.07-.46.21-1.61.55-2.33-.66-.15-.24-.6-.83-1.23-.82-.67.01-.27.38.01.53.34.19.73.9.82 1.13.16.45.68 1.31 2.69.94 0 .67.01 1.3.01 1.49 0 .21-.15.45-.55.38A7.995 7.995 0 0 1 0 8c0-4.42 3.58-8 8-8Z"></path></svg>
-        <div class="flex items-center gap-2 text-sm font-semibold">
-            <span class="opacity-70 hover:opacity-100 cursor-pointer">AziPeak</span>
-            <span class="opacity-50">/</span>
-            <span class="hover:underline cursor-pointer">Signal-Analyzer</span>
-            <span class="badge ml-2 border-white/20 text-white/70 text-[10px]">Public</span>
+    <!-- Navbar -->
+    <nav class="bg-[#24292f] dark:bg-[#010409] text-white py-3 px-4 md:px-8 flex justify-between items-center shrink-0">
+        <div class="flex items-center gap-4">
+            <svg height="32" viewBox="0 0 16 16" width="32" class="fill-white"><path d="M8 0c4.42 0 8 3.58 8 8a8.013 8.013 0 0 1-5.45 7.59c-.4.08-.55-.17-.55-.38 0-.27.01-1.13.01-2.2 0-.75-.25-1.23-.54-1.48 1.78-.2 3.65-.88 3.65-3.95 0-.88-.31-1.59-.82-2.15.08-.2.36-1.02-.08-2.12 0 0-.67-.22-2.2.82-.64-.18-1.32-.27-2-.27-.68 0-1.36.09-2 .27-1.53-1.03-2.2-.82-2.2-.82-.44 1.1-.16 1.92-.08 2.12-.51.56-.82 1.28-.82 2.15 0 3.06 1.86 3.75 3.64 3.95-.23.2-.44.55-.51 1.07-.46.21-1.61.55-2.33-.66-.15-.24-.6-.83-1.23-.82-.67.01-.27.38.01.53.34.19.73.9.82 1.13.16.45.68 1.31 2.69.94 0 .67.01 1.3.01 1.49 0 .21-.15.45-.55.38A7.995 7.995 0 0 1 0 8c0-4.42 3.58-8 8-8Z"></path></svg>
+            <div class="flex items-center gap-2 text-sm font-semibold">
+                <span class="opacity-70">AziPeak</span>
+                <span class="opacity-50">/</span>
+                <span class="hover:underline cursor-pointer">Signal-Analyzer</span>
+                <span class="hidden md:inline-flex items-center ml-2 border border-white/20 px-2 py-0.5 rounded-full text-[10px] opacity-70">Public</span>
+            </div>
         </div>
+        
+        <button id="themeToggle" class="p-2 rounded-md hover:bg-white/10 transition-colors">
+            <svg id="sunIcon" class="hidden w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+            <svg id="moonIcon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
+        </button>
     </nav>
 
-    <main class="max-w-7xl mx-auto p-4 md:p-8 flex-grow">
+    <main class="max-w-7xl mx-auto p-4 md:p-8 w-full flex-grow">
         
-        <!-- Action Bar -->
-        <div class="flex justify-between items-center mb-4">
-            <div class="flex gap-2">
-                <div class="badge bg-slate-50">Branch: <strong>main</strong></div>
-                <div class="text-xs text-slate-500 flex items-center gap-1">
-                    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" class="opacity-60"><path d="M11.93 8.5a4.002 4.002 0 0 1-7.86 0H.75a.75.75 0 0 1 0-1.5h3.32a4.002 4.002 0 0 1 7.86 0h3.32a.75.75 0 0 1 0 1.5h-3.32Z"></path></svg>
-                    <strong>1</strong> Tag
-                </div>
-            </div>
-            <button onclick="location.reload()" class="gh-btn">Reset Terminal</button>
-        </div>
-
-        <!-- Initial Upload -->
-        <div id="dropZone" class="drop-zone p-16 text-center mb-8">
+        <!-- Upload Section -->
+        <div id="dropZone" class="drop-zone p-12 md:p-16 text-center mb-8 border-2 border-dashed border-gh-border dark:border-gh-darkBorder rounded-lg bg-gh-canvas dark:bg-transparent cursor-pointer hover:border-blue-500 transition-colors">
             <input type="file" id="fileInput" class="hidden" accept=".json">
             <div class="max-w-sm mx-auto">
-                <svg viewBox="0 0 24 24" width="32" height="32" class="mx-auto mb-4 fill-slate-400"><path d="M3 3a2 2 0 0 1 2-2h9.982a2 2 0 0 1 1.414.586l4.018 4.018A2 2 0 0 1 21 7.022V21a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V3zm2 0v18h14V8h-5a2 2 0 0 1-2-2V3H5zm10 0v3h3.022L15 3z"></path></svg>
-                <h2 class="text-lg font-semibold mb-1">分析新數據</h2>
-                <p class="text-sm text-slate-500 mb-6">將包含方位角矩陣的 JSON 檔案拖曳至此處，或直接選取檔案。</p>
-                <button class="gh-btn gh-btn-primary px-6 py-2">Add File</button>
+                <svg viewBox="0 0 24 24" width="36" height="36" class="mx-auto mb-4 fill-gh-muted dark:fill-gh-darkMuted"><path d="M3 3a2 2 0 0 1 2-2h9.982a2 2 0 0 1 1.414.586l4.018 4.018A2 2 0 0 1 21 7.022V21a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V3zm2 0v18h14V8h-5a2 2 0 0 1-2-2V3H5zm10 0v3h3.022L15 3z"></path></svg>
+                <h2 class="text-lg font-semibold mb-1">分析信號數據</h2>
+                <p class="text-sm text-gh-muted dark:text-gh-darkMuted mb-6">點擊或拖放方位角矩陣 JSON</p>
+                <button class="bg-[#1f883d] hover:bg-[#1a7f37] text-white font-semibold text-xs py-2 px-6 rounded-md shadow-sm">選擇檔案</button>
             </div>
         </div>
 
-        <div id="resultSection" class="hidden space-y-6">
-            <!-- Repo Info Stats -->
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div class="gh-container p-4 bg-white">
-                    <p class="text-xs font-semibold text-slate-500 mb-1">Peak Azimuth</p>
+        <div id="resultSection" class="hidden space-y-6 animate-in fade-in duration-500">
+            <!-- Stats Grid -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div class="gh-container p-4">
+                    <p class="text-[10px] font-bold text-gh-muted dark:text-gh-darkMuted uppercase mb-1">Peak Azimuth</p>
                     <p id="maxAzimuth" class="mono text-xl font-bold">-</p>
                 </div>
-                <div class="gh-container p-4 bg-white">
-                    <p class="text-xs font-semibold text-slate-500 mb-1">Mean Intensity</p>
+                <div class="gh-container p-4">
+                    <p class="text-[10px] font-bold text-gh-muted dark:text-gh-darkMuted uppercase mb-1">Mean Intensity</p>
                     <p id="avgIntensity" class="mono text-xl font-bold">-</p>
                 </div>
-                <div class="gh-container p-4 bg-white">
-                    <p class="text-xs font-semibold text-slate-500 mb-1">Quality Index</p>
-                    <p id="topTenAvg" class="mono text-xl font-bold text-green-600">-</p>
+                <div class="gh-container p-4">
+                    <p class="text-[10px] font-bold text-gh-muted dark:text-gh-darkMuted uppercase mb-1">Top 10 Bias</p>
+                    <p id="topTenAvg" class="mono text-xl font-bold text-green-600 dark:text-green-400">-</p>
                 </div>
-                <div class="gh-container p-4 bg-white">
-                    <p class="text-xs font-semibold text-slate-500 mb-1">Matrix Resolution</p>
+                <div class="gh-container p-4">
+                    <p class="text-[10px] font-bold text-gh-muted dark:text-gh-darkMuted uppercase mb-1">Resolution</p>
                     <p id="totalPoints" class="mono text-xl font-bold">-</p>
                 </div>
             </div>
 
             <div class="grid grid-cols-12 gap-6">
-                <div class="col-span-12 lg:col-span-8 gh-container bg-white">
-                    <div class="gh-header flex justify-between items-center">
+                <!-- Chart Container -->
+                <div class="col-span-12 lg:col-span-8 gh-container">
+                    <div class="bg-gh-canvas dark:bg-[#0d1117] border-b border-gh-border dark:border-gh-darkBorder px-4 py-2 flex justify-between items-center">
+                        <span class="text-xs font-bold flex items-center gap-2">
+                            <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M0 1.75C0 .784.784 0 1.75 0h12.5C15.216 0 16 .784 16 1.75v12.5A1.75 1.75 0 0 1 14.25 16H1.75A1.75 1.75 0 0 1 0 14.25V1.75ZM1.75 1.5a.25.25 0 0 0-.25.25v12.5c0 .138.112.25.25.25h12.5a.25.25 0 0 0 .25-.25V1.75a.25.25 0 0 0-.25-.25H1.75Z"></path></svg>
+                            Spectrum_Interactive_Map.svg
+                        </span>
                         <div class="flex items-center gap-2">
-                            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" class="text-slate-500"><path d="M0 1.75C0 .784.784 0 1.75 0h12.5C15.216 0 16 .784 16 1.75v12.5A1.75 1.75 0 0 1 14.25 16H1.75A1.75 1.75 0 0 1 0 14.25V1.75ZM1.75 1.5a.25.25 0 0 0-.25.25v12.5c0 .138.112.25.25.25h12.5a.25.25 0 0 0 .25-.25V1.75a.25.25 0 0 0-.25-.25H1.75Z"></path></svg>
-                            <span class="text-xs font-semibold">Spectrum_Distribution_Map.svgn</span>
+                           <span class="w-2 h-2 rounded-full bg-blue-500"></span>
+                           <span class="text-[10px] mono opacity-60">Real-time Data</span>
                         </div>
-                        <span class="text-[10px] mono text-slate-400">Lines: 360 | Zoom: 1.0x</span>
                     </div>
-                    <div class="p-4 h-[450px]">
+                    <div class="p-4 h-[300px] md:h-[450px]">
                         <canvas id="intensityChart"></canvas>
                     </div>
                 </div>
 
-                <div class="col-span-12 lg:col-span-4 gh-container bg-white flex flex-col h-[525px]">
-                    <div class="gh-header">
-                        <h3 class="text-xs font-semibold">Point Registry</h3>
+                <!-- Table Container -->
+                <div class="col-span-12 lg:col-span-4 gh-container flex flex-col h-[500px]">
+                    <div class="bg-gh-canvas dark:bg-[#0d1117] border-b border-gh-border dark:border-gh-darkBorder px-4 py-2">
+                        <h3 class="text-xs font-bold uppercase">Point Registry</h3>
                     </div>
                     <div class="overflow-y-auto custom-scrollbar flex-grow">
                         <table class="w-full text-left text-xs">
-                            <thead class="bg-slate-50 border-b border-slate-200 sticky top-0">
+                            <thead class="bg-gh-canvas/50 dark:bg-gh-darkCanvas/50 sticky top-0 border-b border-gh-border dark:border-gh-darkBorder">
                                 <tr>
-                                    <th class="px-4 py-2 font-semibold">Rank</th>
-                                    <th class="px-4 py-2 font-semibold">Azi</th>
-                                    <th class="px-4 py-2 text-right font-semibold">Intensity</th>
+                                    <th class="px-4 py-3 font-bold">Rank</th>
+                                    <th class="px-4 py-3 font-bold">Azi (°)</th>
+                                    <th class="px-4 py-3 text-right font-bold">Intensity</th>
                                 </tr>
                             </thead>
-                            <tbody id="topFiftyTableBody" class="divide-y divide-slate-100"></tbody>
+                            <tbody id="topTableBody" class="divide-y divide-gh-border/40 dark:divide-gh-darkBorder/40"></tbody>
                         </table>
                     </div>
                 </div>
@@ -180,20 +163,40 @@
         </div>
     </main>
 
-    <!-- Footer Section (Simplified GitHub Style) -->
-    <footer class="max-w-7xl mx-auto w-full px-8 py-10 mt-8 border-t border-slate-200">
-        <div class="flex justify-center items-center gap-3 text-xs text-slate-400">
-            <svg height="24" viewBox="0 0 16 16" width="24" class="fill-slate-200"><path d="M8 0c4.42 0 8 3.58 8 8a8.013 8.013 0 0 1-5.45 7.59c-.4.08-.55-.17-.55-.38 0-.27.01-1.13.01-2.2 0-.75-.25-1.23-.54-1.48 1.78-.2 3.65-.88 3.65-3.95 0-.88-.31-1.59-.82-2.15.08-.2.36-1.02-.08-2.12 0 0-.67-.22-2.2.82-.64-.18-1.32-.27-2-.27-.68 0-1.36.09-2 .27-1.53-1.03-2.2-.82-2.2-.82-.44 1.1-.16 1.92-.08 2.12-.51.56-.82 1.28-.82 2.15 0 3.06 1.86 3.75 3.64 3.95-.23.2-.44.55-.51 1.07-.46.21-1.61.55-2.33-.66-.15-.24-.6-.83-1.23-.82-.67.01-.27.38.01.53.34.19.73.9.82 1.13.16.45.68 1.31 2.69.94 0 .67.01 1.3.01 1.49 0 .21-.15.45-.55.38A7.995 7.995 0 0 1 0 8c0-4.42 3.58-8 8-8Z"></path></svg>
-            <span class="font-medium">© 2026 popo Inc. All Rights Reserved.</span>
+    <footer class="py-10 border-t border-gh-border dark:border-gh-darkBorder shrink-0">
+        <div class="max-w-7xl mx-auto px-8 flex flex-col md:flex-row justify-center items-center gap-4 text-xs text-gh-muted dark:text-gh-darkMuted">
+            <svg height="24" viewBox="0 0 16 16" width="24" class="fill-current opacity-30"><path d="M8 0c4.42 0 8 3.58 8 8a8.013 8.013 0 0 1-5.45 7.59c-.4.08-.55-.17-.55-.38 0-.27.01-1.13.01-2.2 0-.75-.25-1.23-.54-1.48 1.78-.2 3.65-.88 3.65-3.95 0-.88-.31-1.59-.82-2.15.08-.2.36-1.02-.08-2.12 0 0-.67-.22-2.2.82-.64-.18-1.32-.27-2-.27-.68 0-1.36.09-2 .27-1.53-1.03-2.2-.82-2.2-.82-.44 1.1-.16 1.92-.08 2.12-.51.56-.82 1.28-.82 2.15 0 3.06 1.86 3.75 3.64 3.95-.23.2-.44.55-.51 1.07-.46.21-1.61.55-2.33-.66-.15-.24-.6-.83-1.23-.82-.67.01-.27.38.01.53.34.19.73.9.82 1.13.16.45.68 1.31 2.69.94 0 .67.01 1.3.01 1.49 0 .21-.15.45-.55.38A7.995 7.995 0 0 1 0 8c0-4.42 3.58-8 8-8Z"></path></svg>
+            <span>© 2026 popo Inc. All Rights Reserved.</span>
         </div>
     </footer>
 
     <script>
+        const themeToggle = document.getElementById('themeToggle');
+        const sunIcon = document.getElementById('sunIcon');
+        const moonIcon = document.getElementById('moonIcon');
         const dropZone = document.getElementById('dropZone');
         const fileInput = document.getElementById('fileInput');
         const resultSection = document.getElementById('resultSection');
         let myChart = null;
+        let originalData = [];
+        let sortedData = [];
 
+        // Theme Initialization
+        if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+            sunIcon.classList.remove('hidden');
+            moonIcon.classList.add('hidden');
+        }
+
+        themeToggle.addEventListener('click', () => {
+            const isDark = document.documentElement.classList.toggle('dark');
+            localStorage.theme = isDark ? 'dark' : 'light';
+            sunIcon.classList.toggle('hidden');
+            moonIcon.classList.toggle('hidden');
+            if (myChart) renderChart(originalData); // Re-render to update grid/text colors
+        });
+
+        // File Selection
         dropZone.addEventListener('click', () => fileInput.click());
         fileInput.addEventListener('change', (e) => {
             const file = e.target.files[0];
@@ -209,70 +212,131 @@
                     dropZone.classList.add('hidden');
                     resultSection.classList.remove('hidden');
                 } catch (err) {
-                    alert('Invalid JSON File');
+                    alert('格式錯誤: 請上傳有效的 JSON 檔案');
                 }
             };
             reader.readAsText(file);
         }
 
         function processData(data) {
-            const formattedData = data.map(item => ({ x: item[0], y: item[1] }));
-            const sorted = [...formattedData].sort((a, b) => b.y - a.y);
-            const topTen = sorted.slice(0, 10);
-
+            originalData = data.map(item => ({ x: item[0], y: item[1] }));
+            // 排序找前 50 名
+            sortedData = [...originalData].sort((a, b) => b.y - a.y);
+            
+            const topTen = sortedData.slice(0, 10);
+            
+            // 更新卡片數據
             document.getElementById('maxAzimuth').innerText = `${topTen[0].x.toFixed(2)}°`;
-            document.getElementById('avgIntensity').innerText = Math.round(formattedData.reduce((a,b)=>a+b.y,0)/formattedData.length).toLocaleString();
-            document.getElementById('topTenAvg').innerText = "A+ / Optimized";
-            document.getElementById('totalPoints').innerText = formattedData.length;
+            document.getElementById('avgIntensity').innerText = Math.round(originalData.reduce((a,b)=>a+b.y, 0)/originalData.length).toLocaleString();
+            document.getElementById('topTenAvg').innerText = "Peak-Optimized";
+            document.getElementById('totalPoints').innerText = originalData.length;
 
-            renderTable(sorted.slice(0, 50));
-            renderChart(formattedData);
+            renderTable(sortedData.slice(0, 50));
+            renderChart(originalData);
         }
 
         function renderTable(data) {
-            const tableBody = document.getElementById('topFiftyTableBody');
-            tableBody.innerHTML = data.map((item, i) => `
-                <tr class="hover:bg-slate-50 transition-colors">
-                    <td class="px-4 py-2 text-slate-400">#${(i + 1).toString().padStart(2, '0')}</td>
-                    <td class="px-4 py-2 font-medium">${item.x.toFixed(2)}°</td>
-                    <td class="px-4 py-2 text-right mono text-slate-600 font-bold">${Math.round(item.y).toLocaleString()}</td>
-                </tr>
-            `).join('');
+            const tableBody = document.getElementById('topTableBody');
+            tableBody.innerHTML = data.map((item, i) => {
+                const rank = i + 1;
+                let rankClass = '';
+                if (rank === 1) rankClass = 'rank-1';
+                else if (rank === 2) rankClass = 'rank-2';
+                else if (rank === 3) rankClass = 'rank-3';
+
+                return `
+                    <tr class="hover:bg-slate-50 dark:hover:bg-white/5 transition-colors ${rank <= 10 ? 'rank-top-10' : ''}">
+                        <td class="px-4 py-3 ${rankClass}">#${rank.toString().padStart(2, '0')}</td>
+                        <td class="px-4 py-3 font-medium mono">${item.x.toFixed(2)}°</td>
+                        <td class="px-4 py-3 text-right mono text-gh-muted dark:text-gh-darkMuted font-bold">
+                            ${Math.round(item.y).toLocaleString()}
+                        </td>
+                    </tr>
+                `;
+            }).join('');
         }
 
         function renderChart(allData) {
+            const isDark = document.documentElement.classList.contains('dark');
+            const textColor = isDark ? '#8b949e' : '#636c76';
+            const gridColor = isDark ? '#30363d' : '#f0f0f0';
+            
             const ctx = document.getElementById('intensityChart').getContext('2d');
             if (myChart) myChart.destroy();
+
+            // 標註前 10 名的點
+            const topTen = sortedData.slice(0, 10);
 
             myChart = new Chart(ctx, {
                 type: 'line',
                 data: {
                     datasets: [{
+                        label: 'Intensity Spectrum',
                         data: allData,
                         borderColor: '#0969da',
-                        borderWidth: 2,
-                        pointRadius: 0,
-                        pointHoverRadius: 4,
+                        borderWidth: 1.5,
+                        pointRadius: 1, // 基礎點
+                        pointHoverRadius: 6,
+                        // 動態設置點的屬性
+                        pointBackgroundColor: allData.map(d => {
+                            const isTopTen = topTen.some(t => t.x === d.x && t.y === d.y);
+                            return isTopTen ? '#cf222e' : 'rgba(9, 105, 218, 0)';
+                        }),
+                        pointBorderColor: allData.map(d => {
+                            const isTopTen = topTen.some(t => t.x === d.x && t.y === d.y);
+                            return isTopTen ? (isDark ? '#fff' : '#ffffff') : 'transparent';
+                        }),
+                        pointRadius: allData.map(d => {
+                            const isTopTen = topTen.some(t => t.x === d.x && t.y === d.y);
+                            return isTopTen ? 5 : 0;
+                        }),
+                        pointBorderWidth: 2,
                         fill: true,
-                        backgroundColor: 'rgba(9, 105, 218, 0.05)',
-                        tension: 0
+                        backgroundColor: isDark ? 'rgba(56, 139, 253, 0.05)' : 'rgba(9, 105, 218, 0.03)',
+                        tension: 0.1
                     }]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
+                    interaction: {
+                        mode: 'nearest',
+                        intersect: false
+                    },
                     scales: {
-                        x: { type: 'linear', grid: { color: '#f0f0f0' }, ticks: { font: { family: 'JetBrains Mono', size: 10 } } },
-                        y: { grid: { color: '#f0f0f0' }, ticks: { font: { family: 'JetBrains Mono', size: 10 } } }
+                        x: {
+                            type: 'linear',
+                            grid: { color: gridColor },
+                            ticks: { color: textColor, font: { family: 'JetBrains Mono', size: 10 } },
+                            title: { display: true, text: 'Azimuth (Degree)', color: textColor, font: { size: 11, weight: '600' } }
+                        },
+                        y: {
+                            grid: { color: gridColor },
+                            ticks: { color: textColor, font: { family: 'JetBrains Mono', size: 10 } },
+                            title: { display: true, text: 'Intensity Units', color: textColor, font: { size: 11, weight: '600' } }
+                        }
                     },
                     plugins: {
                         legend: { display: false },
                         tooltip: {
-                            backgroundColor: '#24292f',
-                            padding: 8,
-                            titleFont: { size: 12 },
-                            bodyFont: { family: 'JetBrains Mono', size: 11 },
-                            displayColors: false
+                            backgroundColor: isDark ? '#161b22' : '#24292f',
+                            titleColor: '#fff',
+                            bodyColor: '#fff',
+                            borderColor: isDark ? '#30363d' : '#d0d7de',
+                            borderWidth: 1,
+                            padding: 12,
+                            cornerRadius: 6,
+                            displayColors: false,
+                            callbacks: {
+                                label: function(context) {
+                                    const point = context.raw;
+                                    const rankIdx = sortedData.findIndex(d => d.x === point.x && d.y === point.y);
+                                    const rank = rankIdx + 1;
+                                    let label = ` Rank: #${rank} | Azi: ${point.x.toFixed(2)}°`;
+                                    let subLabel = ` Intensity: ${Math.round(point.y).toLocaleString()}`;
+                                    return [label, subLabel];
+                                }
+                            }
                         }
                     }
                 }
