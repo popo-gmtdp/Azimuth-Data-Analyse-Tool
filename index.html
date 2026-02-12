@@ -1,4 +1,4 @@
-
+<!DOCTYPE html>
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
@@ -73,7 +73,7 @@
             <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
                 <h2 class="text-xl font-bold mb-4 flex items-center">
                     <span class="w-2 h-6 bg-blue-500 rounded-full mr-2"></span>
-                    數據分佈圖 (紅點：前10名，紅線：連續峰值)
+                    數據分佈圖 (紅點：前10名，淡藍點：其餘數據)
                 </h2>
                 <div class="h-[450px] w-full">
                     <canvas id="intensityChart"></canvas>
@@ -174,20 +174,16 @@
         }
 
         function processData(data) {
-            // data 為原始順序
             const formattedData = data.map((item, index) => ({
                 x: item[0],
                 y: item[1],
                 originalIndex: index
             }));
 
-            // 1. 排序找出前 50
             const sorted = [...formattedData].sort((a, b) => b.y - a.y);
             const topFifty = sorted.slice(0, 50);
             const topTen = sorted.slice(0, 10);
-            const topTenIndices = new Set(topTen.map(d => d.originalIndex));
 
-            // 2. 更新表格 (前 50)
             const tableBody = document.getElementById('topFiftyTableBody');
             tableBody.innerHTML = '';
             topFifty.forEach((item, index) => {
@@ -204,7 +200,6 @@
                 tableBody.innerHTML += row;
             });
 
-            // 3. 更新統計
             const total = formattedData.reduce((acc, curr) => acc + curr.y, 0);
             const tenAvg = topTen.reduce((acc, curr) => acc + curr.y, 0) / 10;
             
@@ -213,8 +208,6 @@
             document.getElementById('topTenAvg').innerText = tenAvg.toFixed(2);
             document.getElementById('totalPoints').innerText = formattedData.length;
 
-            // 4. 計算連續峰值連線
-            // 我們只連前 10 名中且在原始索引上連續的點
             const peakLineSegments = [];
             const sortedTopTenByOriginal = [...topTen].sort((a, b) => a.originalIndex - b.originalIndex);
             
@@ -244,37 +237,37 @@
                 myChart.destroy();
             }
 
-            // 建立多個 Dataset：一個是原始線條，一個是紅點，多個是紅連線
             const datasets = [
                 {
-                    label: '強度分佈',
+                    label: '數據分佈 (淡藍點)',
                     data: allData,
-                    borderColor: '#94a3b8',
-                    backgroundColor: 'rgba(203, 213, 225, 0.1)',
+                    borderColor: 'rgba(147, 197, 253, 0.4)', // 淡藍線
+                    backgroundColor: 'rgba(147, 197, 253, 0.1)',
                     borderWidth: 1.5,
                     fill: true,
                     tension: 0.2,
-                    pointRadius: 0, // 預設隱藏點
+                    pointRadius: 2, // 顯示淡藍點
+                    pointBackgroundColor: 'rgba(147, 197, 253, 0.5)',
+                    pointBorderColor: 'transparent',
                     order: 3
                 },
                 {
-                    label: '前10名峰值',
+                    label: '前10名峰值 (紅點)',
                     data: topTen,
                     backgroundColor: '#ef4444',
                     borderColor: '#ffffff',
                     borderWidth: 2,
                     pointRadius: 6,
                     pointHoverRadius: 8,
-                    showLine: false, // 僅顯示點
+                    showLine: false,
                     type: 'scatter',
                     order: 1
                 }
             ];
 
-            // 加入連續峰值連線 Dataset
             peakLineSegments.forEach((segment, i) => {
                 datasets.push({
-                    label: i === 0 ? '連續峰值區域' : '',
+                    label: i === 0 ? '連續峰值連線' : '',
                     data: segment,
                     borderColor: '#ef4444',
                     borderWidth: 3,
@@ -293,7 +286,7 @@
                     responsive: true,
                     maintainAspectRatio: false,
                     interaction: {
-                        mode: 'index',
+                        mode: 'nearest',
                         intersect: false,
                     },
                     scales: {
@@ -312,7 +305,7 @@
                         legend: {
                             position: 'top',
                             labels: {
-                                filter: (item) => item.text !== '' // 隱藏多餘的連線圖例
+                                filter: (item) => item.text !== ''
                             }
                         },
                         tooltip: {
