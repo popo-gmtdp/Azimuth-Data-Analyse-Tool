@@ -191,7 +191,7 @@
                 const row = `
                     <tr class="border-b border-slate-50 hover:bg-slate-50 transition-colors ${isTopTen ? 'bg-red-50/50' : ''}">
                         <td class="py-3 font-medium ${isTopTen ? 'text-red-500' : 'text-slate-500'}">
-                            ${isTopTen ? : ''} #${index + 1}
+                            ${isTopTen ? '': ''} #${index + 1}
                         </td>
                         <td class="py-3 font-bold text-slate-800">${item.x}</td>
                         <td class="py-3 ${isTopTen ? 'text-red-600' : 'text-blue-600'} font-mono font-semibold">${item.y.toLocaleString()}</td>
